@@ -1,5 +1,4 @@
 require 'lolcommits/plugin/base'
-require 'yaml'
 require 'oauth'
 require 'webrick'
 require 'cgi'
@@ -122,7 +121,7 @@ module Lolcommits
       end
 
       def client
-        @client ||= Tumblr.new(
+        @client ||= ::Tumblr.new(
           consumer_key: TUMBLR_CONSUMER_KEY,
           consumer_secret: TUMBLR_CONSUMER_SECRET,
           oauth_token: configuration['access_token'],
