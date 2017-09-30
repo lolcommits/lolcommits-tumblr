@@ -1,4 +1,5 @@
 require 'lolcommits/plugin/base'
+require 'lolcommits/cli/launcher'
 require 'oauth'
 require 'webrick'
 require 'cgi'
@@ -48,15 +49,30 @@ module Lolcommits
       # @return [Nil] if any error occurs
       #
       def run_capture_ready
-        puts 'Posting to Tumblr'
-        r = client.photo(configuration['tumblr_name'], data: runner.main_image)
-        if r.key?('id')
-          puts "\t--> Post successful!"
+        print "*** Posting to Tumblr ... "
+        post = client.photo(configuration['tumblr_name'], data: runner.main_image)
+
+        if post.key?('id')
+          post_url = tumblr_post_url(post)
+          open_url(post_url) if configuration['open_url']
+          print "done! #{post_url}\n"
         else
-          puts "Tumblr post FAILED! #{r}"
+          print "Post FAILED! #{post.inspect}"
         end
       rescue Faraday::Error => e
-        puts "Tumblr post FAILED! #{e.message}"
+        print "Post FAILED! #{e.message}"
+      end
+
+      ##
+      # Returns true if the plugin has been configured.
+      #
+      # @return [Boolean] true/false indicating if plugin is configured
+      #
+      def configured?
+        !configuration['enabled'].nil? &&
+          configuration['access_token'] &&
+          configuration['secret'] &&
+          configuration['tumblr_name']
       end
 
       def configure_options!
@@ -65,10 +81,13 @@ module Lolcommits
         if options['enabled']
           auth_config = configure_auth!
           return unless auth_config
-          options = options.merge(auth_config).merge(configure_tumblr_name)
+          options = options.merge(auth_config).merge(configure_options)
         end
         options
       end
+
+
+      private
 
       def configure_auth!
         puts '---------------------------'
@@ -76,23 +95,24 @@ module Lolcommits
         puts '---------------------------'
 
         request_token = oauth_consumer.get_request_token(exclude_callback: true)
-        print "\n1) Please open this url in your browser to authorize lolcommits:\n\n"
+        puts "Opening this url to authorize lolcommits:"
         puts request_token.authorize_url
-        print "\n2) Launching a local server to complete the OAuth authentication process:\n\n"
+        open_url(request_token.authorize_url)
+        puts "\nLaunching local webbrick server to complete the OAuth process ...\n\n"
         begin
-          server = WEBrick::HTTPServer.new Port: 3000
-          server.mount_proc '/', server_callback(server)
-          server.start
+          local_server.mount_proc '/', server_callback
+          local_server.start
           debug "Requesting Tumblr OAuth Token with verifier: #{@verifier}"
           access_token = request_token.get_access_token(oauth_verifier: @verifier)
-        rescue Errno::EADDRINUSE
-          puts "\nERROR You have something running on port 3000. Please turn it off to complete the authorization process"
-          return
         rescue OAuth::Unauthorized
-          puts "\nERROR: Tumblr OAuth verification faile!"
+          puts "\nERROR: Tumblr OAuth verification failed!"
+          return
+        rescue WEBrick::HTTPServerError
+          puts "\nIt's possible you have something running on port 3000. Please turn it off to complete the authorization process"
           return
         end
         return unless access_token.token && access_token.secret
+
         puts ''
         puts '------------------------------'
         puts 'Thanks! Tumblr Auth Succeeded'
@@ -104,20 +124,12 @@ module Lolcommits
         }
       end
 
-      def configure_tumblr_name
-        print "\n3) What's your tumblr name? (i.e. 'http://[THIS PART HERE].tumblr.com'): "
-        { 'tumblr_name' => gets.strip }
-      end
-
-      ##
-      # Returns true if the plugin has been configured.
-      #
-      # @return [Boolean] true/false indicating if plugin is configured
-      #
-      def configured?
-        !configuration['enabled'].nil? &&
-          configuration['access_token'] &&
-          configuration['secret']
+      def configure_options
+        print "\n* What's your Tumblr name? (i.e. 'http://[THIS PART HERE].tumblr.com'): "
+        tumblr_name = gets.strip
+        print "\n* Automatically open Tumblr URL after posting (y/N): "
+        open_url = ask_yes_or_no?
+        { 'tumblr_name' => tumblr_name, 'open_url' => open_url }
       end
 
       def client
@@ -147,61 +159,79 @@ module Lolcommits
         end
       end
 
-      protected
+      def ask_yes_or_no?(default: false)
+        yes_or_no = parse_user_input(gets.strip)
+        return default if yes_or_no.nil?
+        !!(yes_or_no =~ /^y/i)
+      end
 
-      def server_callback(server)
+      def tumblr_post_url(post)
+        "https://#{configuration['tumblr_name']}.tumblr.com/post/#{post['id']}"
+      end
+
+      def open_url(url)
+        Lolcommits::CLI::Launcher.open_url(url)
+      end
+
+      def local_server
+        @local_server ||= WEBrick::HTTPServer.new(Port: 3000)
+      end
+
+      def oauth_success_response
+        <<-RESPONSE
+          <html>
+            <head>
+              <style>
+              body {
+                background-color: #36465D;
+                text-align: center;
+              }
+
+              a { color: #529ecc; text-decoration: none; }
+              a img { border: none; }
+
+              img {
+                width: 100px;
+                margin-top: 100px;
+              }
+
+              div {
+                margin: 20px auto;
+                font: normal 16px "Helvetica Neue", "HelveticaNeue", Helvetica, Arial, sans-serif;
+                padding: 20px 40px;
+                background: #FEFEFE;
+                width: 50%;
+                border-radius: 10px;
+                color: #757575;
+              }
+
+              h1 {
+                font-size: 18px;
+              }
+              </style>
+            </head>
+            <body>
+              <a href="https://lolcommits.github.io">
+                <img src="https://lolcommits.github.io/assets/img/logo/lolcommits_logo_400px.png" alt="lolcommits" width="100px" />
+              </a>
+              <div>
+                <h1>Lolcommits Tumblr Authorization Complete!</h1>
+                <p>Please return to your console to complete the <a href="https://github.com/lolcommits/lolcommits-tumblr">lolcommits-tumblr</a> plugin setup</p>
+              </div>
+            </body>
+          </html>
+        RESPONSE
+      end
+
+      def server_callback
         proc do |req, res|
           q = CGI.parse req.request_uri.query
           @verifier = q['oauth_verifier'][0]
-          server.stop
-          res.body = 'Lolcommits authorization complete!'
+          local_server.stop
+          local_server.shutdown
+          res.body = oauth_success_response
         end
       end
     end
   end
 end
-
-#       ##
-#       # Initialize plugin with runner, config and set all configurable options.
-#       #
-#       def initialize(runner: nil, config: nil)
-#         super
-#         options.concat(plugin_options)
-#       end
-
-#       ##
-#       # Returns true if the plugin has been configured.
-#       #
-#       # @return [Boolean] true/false indicating if plugin is configured
-#       #
-#       def configured?
-#         !!(!configuration['enabled'].nil? && configuration['endpoint'])
-#       end
-
-#       ##
-#       # Returns true/false indicating if the plugin has been correctly
-#       # configured. The `endpoint` option must be set with a URL beginning with
-#       # http(s)://
-#       #
-#       # @return [Boolean] true/false indicating if plugin is correctly
-#       # configured
-#       #
-#       def valid_configuration?
-#         !!(configuration['endpoint'] =~ /^http(s)?:\/\//)
-#       end
-#
-#       private
-#
-#       ##
-#       # Returns all configuration options available for this plugin.
-#       #
-#       # @return [Array] the option names
-#       #
-#       def plugin_options
-#         %w(
-#           endpoint
-#           optional_key
-#           optional_http_auth_username
-#           optional_http_auth_password
-#         )
-#       end
