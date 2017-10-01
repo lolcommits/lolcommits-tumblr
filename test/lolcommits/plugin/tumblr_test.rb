@@ -1,5 +1,7 @@
+require "json"
+require 'net/http'
 require "test_helper"
-require 'webmock/minitest'
+require "webmock/minitest"
 
 describe Lolcommits::Plugin::Tumblr do
 
@@ -22,7 +24,7 @@ describe Lolcommits::Plugin::Tumblr do
     def runner
       # a simple lolcommits runner with an empty configuration Hash
       @runner ||= Lolcommits::Runner.new(
-        main_image: Tempfile.new('main_image.jpg'),
+        main_image: Tempfile.new("main_image.jpg"),
         config: OpenStruct.new(
           read_configuration: {},
           loldir: File.expand_path("#{__dir__}../../../images")
@@ -39,25 +41,13 @@ describe Lolcommits::Plugin::Tumblr do
         read_configuration: {
           "tumblr" => {
             "enabled" => true,
-            "endpoint" => "https://tumblr.com/uplol",
-            'optional_http_auth_username' => 'joe',
-            'optional_http_auth_password' => '1234'
+            "access_token" => "tumblr-access-token",
+            "secret" => "tumblr-secret",
+            "tumblr_name" => "my-tumblr",
+            "open_url" => false
           }
         }
       )
-    end
-
-    describe "initalizing" do
-      it "assigns runner and all plugin options" do
-        plugin.runner.must_equal runner
-        plugin.options.must_equal %w(
-          enabled
-          endpoint
-          optional_key
-          optional_http_auth_username
-          optional_http_auth_password
-        )
-      end
     end
 
     describe "#enabled?" do
@@ -75,24 +65,25 @@ describe Lolcommits::Plugin::Tumblr do
       before { commit_repo_with_message("first commit!") }
       after { teardown_repo }
 
-      it "syncs lolcommits" do
+      it "posts lolcommit image to tumblr showing link to new photo post" do
         in_repo do
           plugin.config = valid_enabled_config
 
-          stub_request(:post, "https://tumblr.com/uplol").to_return(status: 200)
+          stub_request(:post, "https://api.tumblr.com/v2/blog/my-tumblr.tumblr.com/post").to_return(
+            body: {
+              "meta" => { "status" => 201, "msg" => "Created"},
+              "response" => { "id" => 123456789 }
+            }.to_json,
+            headers: { "Content-Type" => "application/json" },
+            status: 201
+          )
 
-          plugin.run_capture_ready
+          output = fake_io_capture { plugin.run_capture_ready }
+          output.must_match "done! https://my-tumblr.tumblr.com/post/123456789"
 
-          assert_requested :post, "https://tumblr.com/uplol", times: 1,
-            headers: {'Content-Type' => /multipart\/form-data/ } do |req|
-            req.body.must_match /Content-Disposition: form-data;.+name="file"; filename="main_image.jpg.+"/
-            req.body.must_match 'name="repo"'
-            req.body.must_match 'name="author_name"'
-            req.body.must_match 'name="author_email"'
-            req.body.must_match 'name="sha"'
-            req.body.must_match 'name="key"'
-            req.body.must_match "plugin-test-repo"
-            req.body.must_match "first commit!"
+          assert_requested :post, "https://api.tumblr.com/v2/blog/my-tumblr.tumblr.com/post", times: 1,
+            headers: {"Content-Type" => /multipart\/form-data/, "Accept" => "application/json" } do |req|
+            req.body.must_match 'filename="main_image.jpg'
           end
         end
       end
@@ -103,21 +94,46 @@ describe Lolcommits::Plugin::Tumblr do
         plugin.configured?.must_equal false
       end
 
+      it "returns false when partially configured" do
+        plugin.config = OpenStruct.new(read_configuration: {
+          "tumblr" => { "enabled" => true, "tumblr_name" => "fire" }
+        })
+        plugin.configured?.must_equal false
+      end
+
       it "returns true when configured" do
         plugin.config = valid_enabled_config
         plugin.configured?.must_equal true
       end
 
       it "allows plugin options to be configured" do
-        # enabled, endpoint, key, user, password
-        inputs = %w(
-          true
-          https://my-server.com/uplol
-          key-123
-          joe
-          1337pass
-        )
+        WebMock.disable_net_connect!(allow_localhost: true)
+
+        # enabled tumblr_name open_url
+        inputs = %w(true my-tumblr Y)
         configured_plugin_options = {}
+
+        # stub Oauth token request flow
+        stub_request(:get, "https://www.tumblr.com/oauth/request_token").to_return(
+          status: 200,
+          body: "oauth_token=mytoken&oauth_token_secret=mytokensercet&oauth_callback_confirmed=true"
+        )
+
+        stub_request(:get, "https://www.tumblr.com/oauth/access_token").to_return(
+          status: 200,
+          body: "oauth_token=tumblr-access-token&oauth_token_secret=tumblr-secret"
+        )
+
+        # fake clicking authorize app in Tumblr, hitting local webrick server
+        # this will loop and requests until server responds OK
+        fork do
+          res = nil
+          while !res || res.code != "200"
+            uri = URI('http://localhost:3000/?oauth_verifier[]=my-verifier')
+            res = Net::HTTP.get_response(uri) rescue nil
+            sleep 0.1
+          end
+        end
 
         fake_io_capture(inputs: inputs) do
           configured_plugin_options = plugin.configure_options!
@@ -125,25 +141,13 @@ describe Lolcommits::Plugin::Tumblr do
 
         configured_plugin_options.must_equal({
           "enabled" => true,
-          "endpoint" => "https://my-server.com/uplol",
-          "optional_key" => "key-123",
-          "optional_http_auth_username" => "joe",
-          "optional_http_auth_password" => "1337pass"
+          "access_token" => "tumblr-access-token",
+          "secret" => "tumblr-secret",
+          "tumblr_name" => "my-tumblr",
+          "open_url" => true
         })
-      end
 
-      describe "#valid_configuration?" do
-        it "returns false for an invalid configuration" do
-          plugin.config = OpenStruct.new(read_configuration: {
-            "lolsrv" => { "endpoint" => "gibberish" }
-          })
-          plugin.valid_configuration?.must_equal false
-        end
-
-        it "returns true with a valid configuration" do
-          plugin.config = valid_enabled_config
-          plugin.valid_configuration?.must_equal true
-        end
+        WebMock.disable_net_connect!
       end
     end
   end

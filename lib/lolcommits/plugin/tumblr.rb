@@ -7,7 +7,7 @@ require 'tumblr_client'
 
 module Lolcommits
   module Plugin
-    class LolTumblr < Base
+    class Tumblr < Base
 
       TUMBLR_API_ENDPOINT    = 'https://www.tumblr.com'.freeze
       TUMBLR_CONSUMER_KEY    = '2FtMEDpEPkxjoUdkpHh42h9wqTu9IVS7Ra0QyNZGixdCvhllN2'.freeze
@@ -69,12 +69,21 @@ module Lolcommits
       # @return [Boolean] true/false indicating if plugin is configured
       #
       def configured?
-        !configuration['enabled'].nil? &&
-          configuration['access_token'] &&
-          configuration['secret'] &&
-          configuration['tumblr_name']
+        !!(configuration['enabled'] &&
+           configuration['access_token'] &&
+           configuration['secret'] &&
+           configuration['tumblr_name'])
       end
 
+      ##
+      # Prompts the user to configure the plugin's options.
+      #
+      # If the enabled option is set, Ouath configuration is attempted, if
+      # successful additional plugin options are asked for to set both
+      # `tumblr_name` and `open_url`.
+      #
+      # @return [Hash] a hash of configured plugin options
+      #
       def configure_options!
         options = super
         # ask user to configure tokens if enabling
@@ -90,33 +99,35 @@ module Lolcommits
       private
 
       def configure_auth!
-        puts '---------------------------'
-        puts 'Need to grab tumblr tokens'
-        puts '---------------------------'
+        puts ''
+        puts '----------------------------------------'
+        puts '    Need to grab Tumblr Oauth token     '
+        puts '----------------------------------------'
 
         request_token = oauth_consumer.get_request_token(exclude_callback: true)
-        puts "Opening this url to authorize lolcommits:"
+        puts "\nOpening this url to authorize lolcommits:"
         puts request_token.authorize_url
         open_url(request_token.authorize_url)
-        puts "\nLaunching local webbrick server to complete the OAuth process ...\n\n"
+        puts "\nLaunching local webbrick server to complete the OAuth process ...\n"
         begin
+          trap('INT') { local_server.shutdown }
           local_server.mount_proc '/', server_callback
           local_server.start
           debug "Requesting Tumblr OAuth Token with verifier: #{@verifier}"
           access_token = request_token.get_access_token(oauth_verifier: @verifier)
         rescue OAuth::Unauthorized
-          puts "\nERROR: Tumblr OAuth verification failed!"
+          puts "ERROR: Tumblr OAuth verification failed!"
           return
         rescue WEBrick::HTTPServerError
-          puts "\nIt's possible you have something running on port 3000. Please turn it off to complete the authorization process"
+          puts "Do you have something running on port 3000? Please turn it off to complete the authorization process"
           return
         end
         return unless access_token.token && access_token.secret
 
         puts ''
-        puts '------------------------------'
-        puts 'Thanks! Tumblr Auth Succeeded'
-        puts '------------------------------'
+        puts '----------------------------------------'
+        puts 'Thanks! Lolcommits Tumblr Auth Succeeded'
+        puts '----------------------------------------'
 
         {
           'access_token' => access_token.token,
@@ -126,7 +137,7 @@ module Lolcommits
 
       def configure_options
         print "\n* What's your Tumblr name? (i.e. 'http://[THIS PART HERE].tumblr.com'): "
-        tumblr_name = gets.strip
+        tumblr_name = parse_user_input(gets.strip)
         print "\n* Automatically open Tumblr URL after posting (y/N): "
         open_url = ask_yes_or_no?
         { 'tumblr_name' => tumblr_name, 'open_url' => open_url }
@@ -177,7 +188,7 @@ module Lolcommits
         @local_server ||= WEBrick::HTTPServer.new(Port: 3000)
       end
 
-      def oauth_success_response
+      def oauth_response(heading, message)
         <<-RESPONSE
           <html>
             <head>
@@ -215,8 +226,8 @@ module Lolcommits
                 <img src="https://lolcommits.github.io/assets/img/logo/lolcommits_logo_400px.png" alt="lolcommits" width="100px" />
               </a>
               <div>
-                <h1>Lolcommits Tumblr Authorization Complete!</h1>
-                <p>Please return to your console to complete the <a href="https://github.com/lolcommits/lolcommits-tumblr">lolcommits-tumblr</a> plugin setup</p>
+                <h1>#{heading}</h1>
+                <p>#{message}</p>
               </div>
             </body>
           </html>
@@ -225,11 +236,21 @@ module Lolcommits
 
       def server_callback
         proc do |req, res|
-          q = CGI.parse req.request_uri.query
-          @verifier = q['oauth_verifier'][0]
           local_server.stop
           local_server.shutdown
-          res.body = oauth_success_response
+
+          query = req.request_uri.query
+          query = CGI.parse(req.request_uri.query) if query
+
+          if query && query['oauth_verifier']
+            @verifier = query['oauth_verifier'][0]
+            res.body = oauth_response(
+              "Lolcommits Authorization Complete",
+              "Please return to your console to complete the <a href=\"https://github.com/lolcommits/lolcommits-tumblr\">lolcommits-tumblr</a> plugin setup"
+            )
+          else
+            res.body = oauth_response("Lolcommits Authorization Cancelled", ":( Oh well, it was fun to ask")
+          end
         end
       end
     end
