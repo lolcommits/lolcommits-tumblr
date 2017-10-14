@@ -39,7 +39,7 @@ describe Lolcommits::Plugin::Tumblr do
     def valid_enabled_config
       @config ||= OpenStruct.new(
         read_configuration: {
-          "tumblr" => {
+          plugin_name => {
             "enabled" => true,
             "access_token" => "tumblr-access-token",
             "secret" => "tumblr-secret",
@@ -96,7 +96,7 @@ describe Lolcommits::Plugin::Tumblr do
 
       it "returns false when partially configured" do
         plugin.config = OpenStruct.new(read_configuration: {
-          "tumblr" => { "enabled" => true, "tumblr_name" => "fire" }
+          plugin_name => { "enabled" => true, "tumblr_name" => "fire" }
         })
         plugin.configured?.must_equal false
       end
@@ -107,6 +107,7 @@ describe Lolcommits::Plugin::Tumblr do
       end
 
       it "allows plugin options to be configured" do
+        # allow requests to localhost for this test
         WebMock.disable_net_connect!(allow_localhost: true)
 
         # enabled tumblr_name open_url
@@ -124,8 +125,8 @@ describe Lolcommits::Plugin::Tumblr do
           body: "oauth_token=tumblr-access-token&oauth_token_secret=tumblr-secret"
         )
 
-        # fake clicking authorize app in Tumblr, hitting local webrick server
-        # this will loop and requests until server responds OK
+        # fake clicking authorize app in Tumblr by hitting local webrick server
+        # this will loop and request until the server responds 200 OK
         fork do
           res = nil
           while !res || res.code != "200"

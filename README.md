@@ -2,8 +2,8 @@
 
 [![Gem Version](https://img.shields.io/gem/v/lolcommits-tumblr.svg?style=flat)](http://rubygems.org/gems/lolcommits-tumblr)
 [![Travis Build Status](https://travis-ci.org/lolcommits/lolcommits-tumblr.svg?branch=master)](https://travis-ci.org/lolcommits/lolcommits-tumblr)
-[![Test Coverage](https://codeclimate.com/github/lolcommits/lolcommits-tumblr/badges/coverage.svg)](https://codeclimate.com/github/lolcommits/lolcommits-tumblr/coverage)
-[![Code Climate](https://codeclimate.com/github/lolcommits/lolcommits-tumblr/badges/gpa.svg)](https://codeclimate.com/github/lolcommits/lolcommits-tumblr)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/0c289196d8504223c31a/test_coverage)](https://codeclimate.com/github/lolcommits/lolcommits-tumblr/test_coverage)
+[![Maintainability](https://api.codeclimate.com/v1/badges/0c289196d8504223c31a/maintainability)](https://codeclimate.com/github/lolcommits/lolcommits-tumblr/maintainability)
 [![Gem Dependency Status](https://gemnasium.com/badges/github.com/lolcommits/lolcommits-tumblr.svg)](https://gemnasium.com/github.com/lolcommits/lolcommits-tumblr)
 
 [lolcommits](https://lolcommits.github.io/) takes a snapshot with your webcam
@@ -31,7 +31,9 @@ to visit Tumblr to authenticate and allow access.
 
     $ lolcommits --config -p tumblr
     # set enabled to `true`
-    # then visit the link to retrieve a token and grant the plugin access
+    # You'll be asked to confirm access for this plugin at tumblr.com
+    # Click 'allow' then return to the console to set your Tumblr name
+    # Optionally set the plugin to auto-open each created Tumblr post
 
 That's it! Your next lolcommit will automatically be posted to your Tumblr blog.
 To disable use:
@@ -48,9 +50,11 @@ report.
 You can also run `bin/console` for an interactive prompt that will allow you to
 experiment with the gem code.
 
-This gem uses [tumblr-client](https://github.com/tumblr/tumblr_client), along
-with [oauth](). The [webrick]() gem is used to provide a responding `return_uri`
-for Oauth authentication to complete.
+This plugin uses the [tumblr-client](https://github.com/tumblr/tumblr_client)
+and [OAuth](https://rubygems.org/gems/oauth/versions/0.5.3) gems. A
+[Webrick](https://rubygems.org/gems/webrick) server is started during
+configuration, to provide a responding `return_uri` for the OAuth flow to
+complete.
 
 ## Tests
 

@@ -9,14 +9,13 @@ Gem::Specification.new do |spec|
   spec.authors       = ["Matthew Hutchinson"]
   spec.email         = ["matt@hiddenloop.com"]
   spec.summary       = %q{Post lolcommits to Tumblr}
+  spec.homepage      = "https://github.com/lolcommits/lolcommits-tumblr"
+  spec.license       = "LGPL-3"
 
   spec.description = <<-EOF
   A simple plugin to post lolcommits to your Tumblr. Configure it with a Tumblr
   access token and secret.
   EOF
-
-  spec.homepage      = "https://github.com/lolcommits/lolcommits-tumblr"
-  spec.license       = "LGPL-3"
 
   # Prevent pushing this gem to RubyGems.org. To allow pushes either set the 'allowed_push_host'
   # to allow pushing to a single host or delete this section to allow pushing to any host.

@@ -90,7 +90,7 @@ module Lolcommits
         if options['enabled']
           auth_config = configure_auth!
           return unless auth_config
-          options = options.merge(auth_config).merge(configure_options)
+          options = options.merge(auth_config).merge(configure_tumblr)
         end
         options
       end
@@ -111,6 +111,7 @@ module Lolcommits
         puts "\nLaunching local webbrick server to complete the OAuth process ...\n"
         begin
           trap('INT') { local_server.shutdown }
+          trap('SIGTERM') { local_server.shutdown }
           local_server.mount_proc '/', server_callback
           local_server.start
           debug "Requesting Tumblr OAuth Token with verifier: #{@verifier}"
@@ -135,7 +136,7 @@ module Lolcommits
         }
       end
 
-      def configure_options
+      def configure_tumblr
         print "\n* What's your Tumblr name? (i.e. 'http://[THIS PART HERE].tumblr.com'): "
         tumblr_name = parse_user_input(gets.strip)
         print "\n* Automatically open Tumblr URL after posting (y/N): "
@@ -160,14 +161,6 @@ module Lolcommits
           request_endpoint: TUMBLR_API_ENDPOINT,
           http_method: :get
         )
-      end
-
-      def config_with_default(key, default = nil)
-        if configuration[key]
-          configuration[key].strip.empty? ? default : configuration[key]
-        else
-          default
-        end
       end
 
       def ask_yes_or_no?(default: false)
