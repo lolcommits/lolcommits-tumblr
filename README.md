@@ -19,6 +19,7 @@ Tumblr access token and secret (the plugin will guide you through this process).
 * A webcam
 * [ImageMagick](http://www.imagemagick.org)
 * [ffmpeg](https://www.ffmpeg.org) (optional) for animated gif capturing
+* A [Tumblr](https://tumblr.com) account
 
 ## Installation
 
@@ -31,9 +32,9 @@ to visit Tumblr to authenticate and allow access.
 
     $ lolcommits --config -p tumblr
     # set enabled to `true`
-    # You'll be asked to confirm access for this plugin at tumblr.com
-    # Click 'allow' then return to the console to set your Tumblr name
-    # Optionally set the plugin to auto-open each created Tumblr post
+    # confirm access for this plugin at tumblr.com (link opens automatically)
+    # click 'allow' then return to the console to set your Tumblr name
+    # optionally set the plugin to auto-open each created Tumblr post
 
 That's it! Your next lolcommit will automatically be posted to your Tumblr blog.
 To disable use:
