@@ -14,15 +14,6 @@ module Lolcommits
       TUMBLR_CONSUMER_SECRET = 'qWuvxgFUR2YyWKtbWOkDTMAiBEbj7ZGaNLaNQPba0PI1N4JpBs'.freeze
 
       ##
-      # Returns the name of the plugin to identify the plugin to lolcommits.
-      #
-      # @return [String] the plugin name
-      #
-      def self.name
-        'tumblr'
-      end
-
-      ##
       # Returns position(s) of when this plugin should run during the capture
       # process. Uploading happens when a new capture is ready.
       #
@@ -50,11 +41,11 @@ module Lolcommits
       #
       def run_capture_ready
         print "*** Posting to Tumblr ... "
-        post = client.photo(configuration['tumblr_name'], data: runner.main_image)
+        post = client.photo(configuration[:tumblr_name], data: runner.main_image)
 
         if post.key?('id')
           post_url = tumblr_post_url(post)
-          open_url(post_url) if configuration['open_url']
+          open_url(post_url) if configuration[:open_url]
           print "done! #{post_url}\n"
         else
           print "Post FAILED! #{post.inspect}"
@@ -64,15 +55,14 @@ module Lolcommits
       end
 
       ##
-      # Returns true if the plugin has been configured.
+      # Returns true if the plugin has been configured correctly
       #
-      # @return [Boolean] true/false indicating if plugin is configured
+      # @return [Boolean] true/false indicating if plugin has a valid config
       #
-      def configured?
-        !!(configuration['enabled'] &&
-           configuration['access_token'] &&
-           configuration['secret'] &&
-           configuration['tumblr_name'])
+      def valid_configuration?
+        !!(configuration[:access_token] &&
+           configuration[:secret] &&
+           configuration[:tumblr_name])
       end
 
       ##
@@ -87,7 +77,7 @@ module Lolcommits
       def configure_options!
         options = super
         # ask user to configure tokens if enabling
-        if options['enabled']
+        if options[:enabled]
           auth_config = configure_auth!
           return unless auth_config
           options = options.merge(auth_config).merge(configure_tumblr)
@@ -131,8 +121,8 @@ module Lolcommits
         puts '----------------------------------------'
 
         {
-          'access_token' => access_token.token,
-          'secret'       => access_token.secret
+          access_token: access_token.token,
+          secret: access_token.secret
         }
       end
 
@@ -141,15 +131,15 @@ module Lolcommits
         tumblr_name = parse_user_input(gets.strip)
         print "\n* Automatically open Tumblr URL after posting (y/N): "
         open_url = ask_yes_or_no?
-        { 'tumblr_name' => tumblr_name, 'open_url' => open_url }
+        { tumblr_name: tumblr_name, open_url: open_url }
       end
 
       def client
         @client ||= ::Tumblr.new(
           consumer_key: TUMBLR_CONSUMER_KEY,
           consumer_secret: TUMBLR_CONSUMER_SECRET,
-          oauth_token: configuration['access_token'],
-          oauth_token_secret: configuration['secret']
+          oauth_token: configuration[:access_token],
+          oauth_token_secret: configuration[:secret]
         )
       end
 
@@ -170,7 +160,7 @@ module Lolcommits
       end
 
       def tumblr_post_url(post)
-        "https://#{configuration['tumblr_name']}.tumblr.com/post/#{post['id']}"
+        "https://#{configuration[:tumblr_name]}.tumblr.com/post/#{post['id']}"
       end
 
       def open_url(url)
