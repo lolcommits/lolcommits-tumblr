@@ -168,7 +168,15 @@ module Lolcommits
       end
 
       def local_server
-        @local_server ||= WEBrick::HTTPServer.new(Port: 3000)
+        @local_server ||= WEBrick::HTTPServer.new(
+          Port: 3000,
+          Logger: null_logger,
+          AccessLog: null_logger
+        )
+      end
+
+      def null_logger
+        WEBrick::Log.new(nil, -1)
       end
 
       def oauth_response(heading, message)
