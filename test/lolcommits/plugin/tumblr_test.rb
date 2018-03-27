@@ -8,10 +8,6 @@ describe Lolcommits::Plugin::Tumblr do
   include Lolcommits::TestHelpers::GitRepo
   include Lolcommits::TestHelpers::FakeIO
 
-  it "should run on capture ready" do
-    ::Lolcommits::Plugin::Tumblr.runner_order.must_equal [:capture_ready]
-  end
-
   describe "with a runner" do
     def runner
       # a simple lolcommits runner with an empty configuration Hash

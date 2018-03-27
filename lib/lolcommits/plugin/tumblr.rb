@@ -14,16 +14,6 @@ module Lolcommits
       TUMBLR_CONSUMER_SECRET = 'qWuvxgFUR2YyWKtbWOkDTMAiBEbj7ZGaNLaNQPba0PI1N4JpBs'.freeze
 
       ##
-      # Returns position(s) of when this plugin should run during the capture
-      # process. Uploading happens when a new capture is ready.
-      #
-      # @return [Array] the position(s) (:capture_ready)
-      #
-      def self.runner_order
-        [:capture_ready]
-      end
-
-      ##
       # Post-capture hook, runs after lolcommits captures a snapshot. Uploads
       # the lolcommit image to the remote server with an optional Authorization
       # header and the following request params.
