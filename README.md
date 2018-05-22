@@ -1,10 +1,10 @@
 # Lolcommits Tumblr
 
-[![Gem Version](https://img.shields.io/gem/v/lolcommits-tumblr.svg?style=flat)](http://rubygems.org/gems/lolcommits-tumblr)
-[![Travis Build Status](https://travis-ci.org/lolcommits/lolcommits-tumblr.svg?branch=master)](https://travis-ci.org/lolcommits/lolcommits-tumblr)
-[![Maintainability](https://img.shields.io/codeclimate/maintainability/lolcommits/lolcommits-tumblr.svg)](https://codeclimate.com/github/lolcommits/lolcommits-tumblr/maintainability)
-[![Test Coverage](https://img.shields.io/codeclimate/c/lolcommits/lolcommits-tumblr.svg)](https://codeclimate.com/github/lolcommits/lolcommits-tumblr/test_coverage)
-[![Gem Dependency Status](https://gemnasium.com/badges/github.com/lolcommits/lolcommits-tumblr.svg)](https://gemnasium.com/github.com/lolcommits/lolcommits-tumblr)
+[![Gem](https://img.shields.io/gem/v/lolcommits-tumblr.svg?style=flat)](http://rubygems.org/gems/lolcommits-tumblr)
+[![Travis](https://travis-ci.org/lolcommits/lolcommits-tumblr.svg?branch=master)](https://travis-ci.org/lolcommits/lolcommits-tumblr)
+[![Depfu](https://img.shields.io/depfu/lolcommits/lolcommits-tumblr.svg?style=flat)](https://depfu.com/github/lolcommits/lolcommits-tumblr)
+[![Maintainability](https://api.codeclimate.com/v1/badges/0c289196d8504223c31a/maintainability)](https://codeclimate.com/github/lolcommits/lolcommits-tumblr/maintainability)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/0c289196d8504223c31a/test_coverage)](https://codeclimate.com/github/lolcommits/lolcommits-tumblr/test_coverage)
 
 [lolcommits](https://lolcommits.github.io/) takes a snapshot with your webcam
 every time you git commit code, and archives a lolcat style image with it. Git
