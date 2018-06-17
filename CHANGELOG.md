@@ -9,6 +9,10 @@ adheres to [Semantic Versioning](Semver).
 
 - Your contribution here!
 
+## [0.2.0] - 2018-17-06
+### Changed
+- Require at least Ruby 2.3 (webrick requires it)
+
 ## [0.1.1] - 2018-05-24
 ### Changed
 - Updated gemspec meta data links.
@@ -42,7 +46,8 @@ adheres to [Semantic Versioning](Semver).
 ### Changed
 - Initial release
 
-[Unreleased]: https://github.com/lolcommits/lolcommits-tumblr/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/lolcommits/lolcommits-tumblr/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/lolcommits/lolcommits-tumblr/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/lolcommits/lolcommits-tumblr/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/lolcommits/lolcommits-tumblr/compare/v0.0.5...v0.1.0
 [0.0.5]: https://github.com/lolcommits/lolcommits-tumblr/compare/v0.0.3...v0.0.5
