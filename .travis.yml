@@ -2,17 +2,24 @@ sudo: false
 language: ruby
 cache: bundler
 rvm:
+<<<<<<< Updated upstream
  - 2.3.6
  - 2.4.3
  - 2.5.1
  - ruby-head
+=======
+  - 2.2.10
+  - 2.3.8
+  - 2.4.5
+  - 2.5.3
+  - 2.6.0
+  - ruby-head
+>>>>>>> Stashed changes
 
 before_install:
- - gem update --system
- - gem install bundler
- - git --version
- - git config --global user.email "lol@commits.org"
- - git config --global user.name "Lolcommits"
+  - git --version
+  - git config --global user.email "lol@commits.org"
+  - git config --global user.name "Lolcommits"
 
 matrix:
   allow_failures:
