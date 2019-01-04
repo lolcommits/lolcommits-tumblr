@@ -2,19 +2,11 @@ sudo: false
 language: ruby
 cache: bundler
 rvm:
-<<<<<<< Updated upstream
- - 2.3.6
- - 2.4.3
- - 2.5.1
- - ruby-head
-=======
-  - 2.2.10
   - 2.3.8
   - 2.4.5
   - 2.5.3
   - 2.6.0
   - ruby-head
->>>>>>> Stashed changes
 
 before_install:
   - git --version
