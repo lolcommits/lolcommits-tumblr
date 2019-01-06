@@ -1,4 +1,3 @@
-require 'pp'
 require 'lolcommits/plugin/base'
 require 'lolcommits/cli/launcher'
 require 'oauth'
