@@ -1,9 +1,11 @@
+require 'pp'
 require 'lolcommits/plugin/base'
 require 'lolcommits/cli/launcher'
 require 'oauth'
 require 'webrick'
 require 'cgi'
 require 'tumblr_client'
+require 'erb'
 
 module Lolcommits
   module Plugin
@@ -31,7 +33,16 @@ module Lolcommits
       #
       def run_capture_ready
         print "*** Posting to Tumblr ... "
-        post = client.photo(configuration[:tumblr_name], data: runner.main_image)
+        if configuration[:caption]
+          tplvars = binding
+          tplvars.local_variable_set(:runner, runner)
+          tplvars.local_variable_set(:vcs_info, runner.vcs_info)          
+          caption = ERB.new(configuration[:caption]).result(tplvars)
+        else
+          caption = nil
+        end
+        p caption
+        post = client.photo(configuration[:tumblr_name], data: runner.main_image, caption: caption)
 
         if post.key?('id')
           post_url = tumblr_post_url(post)
