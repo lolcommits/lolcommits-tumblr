@@ -1,21 +1,20 @@
-# coding: utf-8
 lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require 'lolcommits/tumblr/version'
 
 Gem::Specification.new do |spec|
-  spec.name          = "lolcommits-tumblr"
-  spec.version       = Lolcommits::Tumblr::VERSION
-  spec.authors       = ["Matthew Hutchinson"]
-  spec.email         = ["matt@hiddenloop.com"]
-  spec.summary       = %q{Post lolcommits to Tumblr}
-  spec.homepage      = "https://github.com/lolcommits/lolcommits-tumblr"
-  spec.license       = "LGPL-3"
+  spec.name     = "lolcommits-tumblr"
+  spec.version  = Lolcommits::Tumblr::VERSION
+  spec.authors  = ["Matthew Hutchinson"]
+  spec.email    = ["matt@hiddenloop.com"]
+  spec.summary  = %q{Post lolcommits to Tumblr}
+  spec.homepage = "https://github.com/lolcommits/lolcommits-tumblr"
+  spec.license  = "LGPL-3"
 
-  spec.description = <<-EOF
+  spec.description = <<-DESC
   A simple plugin to post lolcommits to your Tumblr. Configure it with a Tumblr
   access token and secret.
-  EOF
+  DESC
 
   spec.metadata = {
     "homepage_uri"    => "https://github.com/lolcommits/lolcommits-tumblr",
