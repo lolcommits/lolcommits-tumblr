@@ -16,20 +16,10 @@ module Lolcommits
       TUMBLR_CONSUMER_SECRET = 'qWuvxgFUR2YyWKtbWOkDTMAiBEbj7ZGaNLaNQPba0PI1N4JpBs'.freeze
 
       ##
-      # Post-capture hook, runs after lolcommits captures a snapshot. Uploads
-      # the lolcommit image to the remote server with an optional Authorization
-      # header and the following request params.
+      # Post-capture hook, runs after lolcommits captures a snapshot.
       #
-      # `file`    - captured lolcommit image file
-      # `message` - the commit message
-      # `repo`    - repository name e.g. mroth/lolcommits
-      # `sha`     - commit SHA
-      # `key`     - key (string) from plugin configuration (optional)
-      # `author_name` - the commit author name
-      # `author_email` - the commit author email address
-      #
-      # @return [RestClient::Response] response object from POST request
-      # @return [Nil] if any error occurs
+      # Posts the lolcommit main image to Tumblr, printing success or
+      # failure message to stdout.
       #
       def run_capture_ready
         print "*** Posting to Tumblr ... "
