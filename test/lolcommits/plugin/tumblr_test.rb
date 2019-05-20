@@ -14,7 +14,7 @@ describe Lolcommits::Plugin::Tumblr do
     def runner
       # a simple lolcommits runner with an empty configuration Hash
       @runner ||= Lolcommits::Runner.new(
-        main_image: Tempfile.new("main_image.jpg").path
+        lolcommit_path: Tempfile.new("lolcommit.jpg").path
       )
     end
 
@@ -47,7 +47,7 @@ describe Lolcommits::Plugin::Tumblr do
       before { commit_repo_with_message("first commit!") }
       after { teardown_repo }
 
-      it "posts lolcommit image to tumblr showing link to new photo post" do
+      it "posts lolcommit to tumblr showing link to new photo post" do
         in_repo do
           plugin.configuration = valid_enabled_config
 
@@ -65,7 +65,7 @@ describe Lolcommits::Plugin::Tumblr do
 
           assert_requested :post, "https://api.tumblr.com/v2/blog/my-tumblr.tumblr.com/post", times: 1,
             headers: { "Content-Type" => /multipart\/form-data/, "Accept" => "application/json" } do |req|
-            req.body.must_match 'filename="main_image.jpg'
+            req.body.must_match 'filename="lolcommit.jpg'
           end
         end
       end

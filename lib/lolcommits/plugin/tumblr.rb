@@ -22,8 +22,16 @@ module Lolcommits
       # failure message to stdout.
       #
       def run_capture_ready
+        if runner.capture_video && !runner.capture_gif
+          debug "unable to post lolcommit videos, (gif's and jpgs only)"
+          return
+        end
+
         print "*** Posting to Tumblr ... "
-        post = client.photo(configuration[:tumblr_name], data: runner.main_image)
+        post = client.photo(
+          configuration[:tumblr_name],
+          data: image_path
+        )
 
         if post.key?('id')
           post_url = tumblr_post_url(post)
@@ -69,6 +77,10 @@ module Lolcommits
 
 
       private
+
+      def image_path
+        runner.capture_image? ? runner.lolcommit_path : runner.lolcommit_gif_path
+      end
 
       def configure_auth!
         puts ''
