@@ -88,8 +88,8 @@ describe Lolcommits::Plugin::Tumblr do
         # allow requests to localhost for this test
         WebMock.disable_net_connect!(allow_localhost: true)
 
-        # enabled tumblr_name open_url
-        inputs = %w(true my-tumblr Y)
+        # enabled tumblr_name caption_erb open_url
+        inputs = [true, 'my-tumblr', ' ', 'Y']
         configured_plugin_options = {}
 
         # stub Oauth token request flow
@@ -123,7 +123,8 @@ describe Lolcommits::Plugin::Tumblr do
           access_token: "tumblr-access-token",
           secret: "tumblr-secret",
           tumblr_name: "my-tumblr",
-          open_url: true
+          open_url: true,
+          caption_erb: nil
         })
 
         WebMock.disable_net_connect!

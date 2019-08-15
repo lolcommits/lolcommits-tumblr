@@ -5,6 +5,7 @@ require 'lolcommits/cli/launcher'
 require 'oauth'
 require 'webrick'
 require 'cgi'
+require 'erb'
 require 'tumblr_client'
 
 module Lolcommits
@@ -30,7 +31,8 @@ module Lolcommits
         print "*** Posting to Tumblr ... "
         post = client.photo(
           configuration[:tumblr_name],
-          data: image_path
+          data: image_path,
+          caption: tumblr_caption
         )
 
         if post.key?('id')
@@ -123,9 +125,12 @@ module Lolcommits
       def configure_tumblr
         print "\n* What's your Tumblr name? (i.e. 'http://[THIS PART HERE].tumblr.com'): "
         tumblr_name = parse_user_input(gets.strip)
+        print "\n* Optional caption (ERB friendly with vars message, sha, repo, branch, vcs_info)"
+        print "\n  e.g. Committed <%= sha %> in <%= repo %> on <%= branch %> - <%= message %>\n\n"
+        caption_erb = parse_user_input(gets.strip)
         print "\n* Automatically open Tumblr URL after posting (y/N): "
         open_url = ask_yes_or_no?
-        { tumblr_name: tumblr_name, open_url: open_url }
+        { tumblr_name: tumblr_name, open_url: open_url, caption_erb: caption_erb }
       end
 
       def client
@@ -155,6 +160,21 @@ module Lolcommits
 
       def tumblr_post_url(post)
         "https://#{configuration[:tumblr_name]}.tumblr.com/post/#{post['id']}"
+      end
+
+      def tumblr_caption
+        return if configuration[:caption_erb].to_s.strip.empty?
+
+        ERB.new(configuration[:caption_erb]).result(
+          binding.tap do |bind|
+            vcs_info = runner.vcs_info
+            bind.local_variable_set(:message, vcs_info.message)
+            bind.local_variable_set(:sha, vcs_info.sha)
+            bind.local_variable_set(:repo, vcs_info.repo)
+            bind.local_variable_set(:branch, vcs_info.branch)
+            bind.local_variable_set(:vcs_info, vcs_info)
+          end
+        )
       end
 
       def open_url(url)
