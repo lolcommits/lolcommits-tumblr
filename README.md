@@ -35,6 +35,7 @@ be asked to visit Tumblr to authenticate and allow access.
     # set enabled to `true`
     # confirm access for this plugin at tumblr.com (link opens automatically)
     # click 'allow' then return to the console to set your Tumblr name
+    # optionally set a caption for each post (ERB friendly, see below)
     # optionally set the plugin to auto-open each created Tumblr post
 
 That's it! Your next lolcommit will automatically be posted to your
@@ -42,6 +43,21 @@ Tumblr blog.  To disable use:
 
     $ lolcommits --config -p tumblr
     # and set enabled to `false`
+
+### ERB friendly captions
+
+When configuring this plugin, you may optionally set a caption string to for
+each Tumblr post. The ERB bind has these variables available:
+
+* `message` - commit message string
+* `sha` - commit sha (shortened)
+* `branch` - commit branch name
+* `repo` - vcs respository name
+* `vcs_info` - [vcs_info](https://github.com/lolcommits/lolcommits/blob/master/lib/lolcommits/vcs_info.rb) instance (from lolcommits)
+
+Allowing you to set caption strings like this:
+
+    Committed <%= sha %> in <%= repo %> on <%= branch %> - <%= message %>
 
 ## Development
 
