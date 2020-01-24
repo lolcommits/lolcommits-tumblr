@@ -34,12 +34,12 @@ describe Lolcommits::Plugin::Tumblr do
 
     describe "#enabled?" do
       it "is false by default" do
-        plugin.enabled?.must_equal false
+        _(plugin.enabled?).must_equal false
       end
 
       it "is true when configured" do
         plugin.configuration = valid_enabled_config
-        plugin.enabled?.must_equal true
+        _(plugin.enabled?).must_equal true
       end
     end
 
@@ -61,11 +61,11 @@ describe Lolcommits::Plugin::Tumblr do
           )
 
           output = fake_io_capture { plugin.run_capture_ready }
-          output.must_match "done! https://my-tumblr.tumblr.com/post/123456789"
+          _(output).must_match "done! https://my-tumblr.tumblr.com/post/123456789"
 
           assert_requested :post, "https://api.tumblr.com/v2/blog/my-tumblr.tumblr.com/post", times: 1,
             headers: { "Content-Type" => /multipart\/form-data/, "Accept" => "application/json" } do |req|
-            req.body.must_match 'filename="lolcommit.jpg'
+            _(req.body).must_match 'filename="lolcommit.jpg'
           end
         end
       end
@@ -74,12 +74,12 @@ describe Lolcommits::Plugin::Tumblr do
     describe "valid_configuration?" do
       it "returns invalid config when partially configured" do
         plugin.configuration = { tumblr_name: "fire" }
-        plugin.valid_configuration?.must_equal false
+        _(plugin.valid_configuration?).must_equal false
       end
 
       it "returns true with a valid configuration" do
         plugin.configuration = valid_enabled_config
-        plugin.valid_configuration?.must_equal true
+        _(plugin.valid_configuration?).must_equal true
       end
     end
 
@@ -118,7 +118,7 @@ describe Lolcommits::Plugin::Tumblr do
           configured_plugin_options = plugin.configure_options!
         end
 
-        configured_plugin_options.must_equal({
+        _(configured_plugin_options).must_equal({
           enabled: true,
           access_token: "tumblr-access-token",
           secret: "tumblr-secret",
