@@ -1,6 +1,6 @@
-lib = File.expand_path('../lib', __FILE__)
+lib = File.expand_path("../lib", __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require 'lolcommits/tumblr/version'
+require "lolcommits/tumblr/version"
 
 Gem::Specification.new do |spec|
   spec.name     = "lolcommits-tumblr"
@@ -32,10 +32,12 @@ Gem::Specification.new do |spec|
 
   spec.required_ruby_version = ">= 2.4"
 
-  spec.add_runtime_dependency('tumblr_client')
-  spec.add_runtime_dependency('webrick')
-  spec.add_runtime_dependency('oauth')
   spec.add_runtime_dependency "lolcommits", ">= 0.14.2"
+  spec.add_runtime_dependency("faraday")
+  spec.add_runtime_dependency("faraday_middleware")
+  spec.add_runtime_dependency("simple_oauth")
+  spec.add_runtime_dependency("oauth")
+  spec.add_runtime_dependency("webrick")
 
   spec.add_development_dependency "bundler"
   spec.add_development_dependency "webmock"

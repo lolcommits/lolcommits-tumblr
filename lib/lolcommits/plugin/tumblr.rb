@@ -1,20 +1,22 @@
 # frozen_string_literal: true
 
-require 'lolcommits/plugin/base'
-require 'lolcommits/cli/launcher'
-require 'oauth'
-require 'webrick'
-require 'cgi'
-require 'erb'
-require 'tumblr_client'
+require "lolcommits/plugin/base"
+require "lolcommits/cli/launcher"
+require "oauth"
+require "webrick"
+require "cgi"
+require "erb"
+require "faraday"
+require "faraday_middleware"
 
 module Lolcommits
   module Plugin
     class Tumblr < Base
 
-      TUMBLR_API_ENDPOINT    = 'https://www.tumblr.com'.freeze
-      TUMBLR_CONSUMER_KEY    = '2FtMEDpEPkxjoUdkpHh42h9wqTu9IVS7Ra0QyNZGixdCvhllN2'.freeze
-      TUMBLR_CONSUMER_SECRET = 'qWuvxgFUR2YyWKtbWOkDTMAiBEbj7ZGaNLaNQPba0PI1N4JpBs'.freeze
+      TUMBLR_API_HOST        = "api.tumblr.com".freeze
+      TUMBLR_API_ENDPOINT    = "https://www.tumblr.com".freeze
+      TUMBLR_CONSUMER_KEY    = "2FtMEDpEPkxjoUdkpHh42h9wqTu9IVS7Ra0QyNZGixdCvhllN2".freeze
+      TUMBLR_CONSUMER_SECRET = "qWuvxgFUR2YyWKtbWOkDTMAiBEbj7ZGaNLaNQPba0PI1N4JpBs".freeze
 
       ##
       # Post-capture hook, runs after lolcommits captures a snapshot.
@@ -24,23 +26,28 @@ module Lolcommits
       #
       def run_capture_ready
         if runner.capture_video && !runner.capture_gif
-          debug "unable to post lolcommit videos, (gif's and jpgs only)"
+          debug "unable to post videos, (Tumblr API only supports images)"
           return
         end
 
         print "*** Posting to Tumblr ... "
-        post = client.photo(
-          configuration[:tumblr_name],
-          data: image_path,
-          caption: tumblr_caption
-        )
+        response = tumblr_api.post do |req|
+          req.url "v2/blog/#{configuration[:tumblr_name]}/post"
+          req.body = {
+            caption: tumblr_caption,
+            type: "photo",
+            data: Faraday::FilePart.new(lolcommit_path, lolcommit_mime_type)
+          }
+        end
+
+        post = response.body["response"] || {}
 
         if post.key?('id')
           post_url = tumblr_post_url(post)
           open_url(post_url) if configuration[:open_url]
           print "done! #{post_url}\n"
         else
-          print "Post FAILED! #{post.inspect}"
+          print "Post FAILED! #{response.inspect}"
         end
       rescue Faraday::Error => e
         print "Post FAILED! #{e.message}"
@@ -80,15 +87,45 @@ module Lolcommits
 
       private
 
-      def image_path
+      def lolcommit_path
         runner.capture_image? ? runner.lolcommit_path : runner.lolcommit_gif_path
       end
 
+      def lolcommit_mime_type
+        runner.capture_image? ?  "image/jpeg" : "image/gif"
+      end
+
+      def tumblr_api
+        @tumblr_api ||= Faraday.new(url: "https://#{TUMBLR_API_HOST}/", headers: api_headers) do |conn|
+          conn.request :oauth, api_oauth
+          conn.request :multipart
+          conn.request :url_encoded
+          conn.response :json, :content_type => /\bjson$/
+          conn.adapter Faraday.default_adapter
+        end
+      end
+
+      def api_headers
+        {
+          accept: "application/json",
+          user_agent: "lolcommits-tumblr/#{Lolcommits::Tumblr::VERSION}"
+        }
+      end
+
+      def api_oauth
+        {
+          consumer_key: TUMBLR_CONSUMER_KEY,
+          consumer_secret: TUMBLR_CONSUMER_SECRET,
+          token: configuration[:access_token],
+          token_secret: configuration[:secret]
+        }
+      end
+
       def configure_auth!
-        puts ''
-        puts '----------------------------------------'
-        puts '    Need to grab Tumblr Oauth token     '
-        puts '----------------------------------------'
+        puts ""
+        puts "----------------------------------------"
+        puts "    Need to grab Tumblr Oauth token     "
+        puts "----------------------------------------"
 
         request_token = oauth_consumer.get_request_token(exclude_callback: true)
         puts "\nOpening this url to authorize lolcommits:"
@@ -96,9 +133,9 @@ module Lolcommits
         open_url(request_token.authorize_url)
         puts "\nLaunching local webbrick server to complete the OAuth process ...\n"
         begin
-          trap('INT') { local_server.shutdown }
-          trap('SIGTERM') { local_server.shutdown }
-          local_server.mount_proc '/', server_callback
+          trap("INT") { local_server.shutdown }
+          trap("SIGTERM") { local_server.shutdown }
+          local_server.mount_proc "/", server_callback
           local_server.start
           debug "Requesting Tumblr OAuth Token with verifier: #{@verifier}"
           access_token = request_token.get_access_token(oauth_verifier: @verifier)
@@ -111,10 +148,10 @@ module Lolcommits
         end
         return unless access_token.token && access_token.secret
 
-        puts ''
-        puts '----------------------------------------'
-        puts 'Thanks! Lolcommits Tumblr Auth Succeeded'
-        puts '----------------------------------------'
+        puts ""
+        puts "----------------------------------------"
+        puts "Thanks! Lolcommits Tumblr Auth Succeeded"
+        puts "----------------------------------------"
 
         {
           access_token: access_token.token,
@@ -131,15 +168,6 @@ module Lolcommits
         print "\n* Automatically open Tumblr URL after posting (y/N): "
         open_url = ask_yes_or_no?
         { tumblr_name: tumblr_name, open_url: open_url, caption_erb: caption_erb }
-      end
-
-      def client
-        @client ||= ::Tumblr.new(
-          consumer_key: TUMBLR_CONSUMER_KEY,
-          consumer_secret: TUMBLR_CONSUMER_SECRET,
-          oauth_token: configuration[:access_token],
-          oauth_token_secret: configuration[:secret]
-        )
       end
 
       def oauth_consumer
@@ -159,7 +187,7 @@ module Lolcommits
       end
 
       def tumblr_post_url(post)
-        "https://#{configuration[:tumblr_name]}.tumblr.com/post/#{post['id']}"
+        "https://#{configuration[:tumblr_name]}.tumblr.com/post/#{post["id"]}"
       end
 
       def tumblr_caption
@@ -247,8 +275,8 @@ module Lolcommits
           query = req.request_uri.query
           query = CGI.parse(req.request_uri.query) if query
 
-          if query && query['oauth_verifier']
-            @verifier = query['oauth_verifier'][0]
+          if query && query["oauth_verifier"]
+            @verifier = query["oauth_verifier"][0]
             res.body = oauth_response(
               "Lolcommits Authorization Complete",
               "Please return to your console to complete the <a href=\"https://github.com/lolcommits/lolcommits-tumblr\">lolcommits-tumblr</a> plugin setup"

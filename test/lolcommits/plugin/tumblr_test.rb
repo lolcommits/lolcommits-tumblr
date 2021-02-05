@@ -51,7 +51,7 @@ describe Lolcommits::Plugin::Tumblr do
         in_repo do
           plugin.configuration = valid_enabled_config
 
-          stub_request(:post, "https://api.tumblr.com/v2/blog/my-tumblr.tumblr.com/post").to_return(
+          stub_request(:post, "https://api.tumblr.com/v2/blog/my-tumblr/post").to_return(
             body: {
               "meta" => { "status" => 201, "msg" => "Created"},
               "response" => { "id" => 123456789 }
@@ -63,7 +63,7 @@ describe Lolcommits::Plugin::Tumblr do
           output = fake_io_capture { plugin.run_capture_ready }
           _(output).must_match "done! https://my-tumblr.tumblr.com/post/123456789"
 
-          assert_requested :post, "https://api.tumblr.com/v2/blog/my-tumblr.tumblr.com/post", times: 1,
+          assert_requested :post, "https://api.tumblr.com/v2/blog/my-tumblr/post", times: 1,
             headers: { "Content-Type" => /multipart\/form-data/, "Accept" => "application/json" } do |req|
             _(req.body).must_match 'filename="lolcommit.jpg'
           end
