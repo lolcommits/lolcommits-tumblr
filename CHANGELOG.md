@@ -9,6 +9,10 @@ project adheres to [Semantic Versioning][Semver].
 
 - Your contribution here!
 
+## [0.5.1] - 2021-02-06
+## Added
+- Support for Ruby 3.0 (ditch tumblr_client gem, use faraday with simple_oauth)
+
 ## [0.5.0] - 2020-01-24
 ### Removed
 - Support for Ruby < 2.4 (older rubies no longer supported)
@@ -71,7 +75,8 @@ project adheres to [Semantic Versioning][Semver].
 ### Changed
 - Initial release
 
-[Unreleased]: https://github.com/lolcommits/lolcommits-tumblr/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/lolcommits/lolcommits-tumblr/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/lolcommits/lolcommits-tumblr/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/lolcommits/lolcommits-tumblr/compare/v0.4.1...v0.5.0
 [0.4.1]: https://github.com/lolcommits/lolcommits-tumblr/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/lolcommits/lolcommits-tumblr/compare/v0.3.0...v0.4.0

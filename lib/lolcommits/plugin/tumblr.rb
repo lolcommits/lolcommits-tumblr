@@ -96,6 +96,8 @@ module Lolcommits
       end
 
       def tumblr_api
+        # TODO: maybe remove faraday, just use Net::HTTP and simpler code for
+        # Oauth1.0 auth (so we can remove a few runtime deps)
         @tumblr_api ||= Faraday.new(url: "https://#{TUMBLR_API_HOST}/", headers: api_headers) do |conn|
           conn.request :oauth, api_oauth
           conn.request :multipart
