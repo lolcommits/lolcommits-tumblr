@@ -33,7 +33,7 @@ Gem::Specification.new do |spec|
   spec.required_ruby_version = ">= 2.4"
 
   spec.add_runtime_dependency "lolcommits", ">= 0.14.2"
-  spec.add_runtime_dependency("faraday")
+  spec.add_runtime_dependency("faraday", '2.0.0')
   spec.add_runtime_dependency("faraday_middleware")
   spec.add_runtime_dependency("simple_oauth")
   spec.add_runtime_dependency("oauth")
